@@ -4,47 +4,38 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-/**
- * Clase DTO (Data Transfer Object) para la creación de una nueva carta.
- * Esta clase se utiliza para recibir los datos de una nueva carta cuando el cliente la crea.
- */
-@Data  // Lombok genera automáticamente los métodos getter, setter, equals, hashCode, y toString
+@Data
 public class CardCreateDTO {
 
-    /**
-     * Código único de la carta.
-     * No puede estar vacío y debe tener un tamaño máximo de 10 caracteres.
-     */
-    @NotEmpty(message = "{msg.card.code.notEmpty}")  // Valida que el campo no esté vacío
-    @Size(max = 10, message = "{msg.card.code.size}")  // Valida que el tamaño máximo sea 10 caracteres
+    @NotEmpty(message = "{msg.card.code.notEmpty}")
+    @Size(max = 10, message = "{msg.card.code.size}")
     private String code;
 
-    /**
-     * Nombre de la carta.
-     * No puede estar vacío y debe tener un tamaño máximo de 100 caracteres.
-     */
-    @NotEmpty(message = "{msg.card.name.notEmpty}")  // Valida que el campo no esté vacío
-    @Size(max = 100, message = "{msg.card.name.size}")  // Valida que el tamaño máximo sea 100 caracteres
+    @NotEmpty(message = "{msg.card.name.notEmpty}")
+    @Size(max = 100, message = "{msg.card.name.size}")
     private String name;
 
-    /**
-     * Tipo de carta.
-     * El tipo de la carta puede tener un máximo de 50 caracteres.
-     */
-    @Size(max = 50, message = "{msg.card.cardType.size}")  // Valida que el tamaño máximo sea 50 caracteres
+    @Size(max = 50, message = "{msg.card.cardType.size}")
     private String type;
 
-    /**
-     * Rareza de la carta.
-     * La rareza de la carta puede tener un máximo de 50 caracteres.
-     */
-    @Size(max = 50, message = "{msg.card.rarity.size}")  // Valida que el tamaño máximo sea 50 caracteres
+    @Size(max = 50, message = "{msg.card.typing.size}")
+    private String typing;
+
+    @Size(max = 20, message = "{msg.card.attribute.size}")
+    private String attribute;
+
+    private Integer level;
+    private Integer attack;
+    private Integer defense;
+
+    @Size(max = 50, message = "{msg.card.rarity.size}")
     private String rarity;
 
-    /**
-     * Identificador de la expansión a la que pertenece la carta.
-     * Este campo hace referencia al ID de la expansión a la que la carta está asociada.
-     * No tiene restricciones de validación específicas.
-     */
-    private Long expansion;
+    @Size(max = 255, message = "{msg.card.image.size}")
+    private String image;
+
+    @Size(max = 255, message = "{msg.card.description.size}")
+    private String description;
+
+    private Long expansion; // ID de la expansión
 }
