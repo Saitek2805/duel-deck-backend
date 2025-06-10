@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.iesalixar.daw2.keinerhurtado.duel_deck_api.dtos.CardCreateDTO;
 import org.iesalixar.daw2.keinerhurtado.duel_deck_api.dtos.CardDTO;
 import org.iesalixar.daw2.keinerhurtado.duel_deck_api.services.CardService;
+import org.iesalixar.daw2.keinerhurtado.duel_deck_api.services.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Controlador REST para gestionar las cartas.
@@ -32,6 +34,10 @@ import org.springframework.data.web.PageableDefault;
 @RequestMapping("/api/cards")
 //@CrossOrigin(origins = "http://localhost:4200")// El controlador maneja las rutas de "/api/cards"
 public class CardController {
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
 
     private static final Logger logger = LoggerFactory.getLogger(CardController.class);  // Logger para registrar eventos
     @Autowired
@@ -75,21 +81,31 @@ public class CardController {
             @ApiResponse(responseCode = "400", description = "Solicitud inválida, los datos de entrada son incorrectos"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    @PostMapping
-    public ResponseEntity<?> createCard(@Valid @RequestBody CardCreateDTO cardCreateDTO, Locale locale) {
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<?> createCard(
+            @RequestPart("card") @Valid CardCreateDTO cardCreateDTO,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+            Locale locale) {
+
         logger.info("Insertando nueva carta con código {}", cardCreateDTO.getCode());
+
         try {
-            CardDTO createdCard = cardService.createCard(cardCreateDTO, locale);  // Llama al servicio para crear la carta
-            logger.info("Carta creada exitosamente con ID {}", createdCard.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCard);  // Devuelve la carta creada con un código de estado 201
+            // Subir la imagen si se proporciona
+            String imageFileName = null;
+            if (imageFile != null && !imageFile.isEmpty()) {
+                imageFileName = fileStorageService.saveFile(imageFile);
+                cardCreateDTO.setImage(imageFileName); // Guardamos el nombre en el DTO
+            }
+
+            CardDTO createdCard = cardService.createCard(cardCreateDTO, locale);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdCard);
         } catch (IllegalArgumentException e) {
-            logger.warn("Error al crear la carta: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());  // Error 400 si la entrada es incorrecta
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            logger.error("Error al crear la carta: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la carta");  // Error 500 si ocurre un problema interno
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la carta.");
         }
     }
+
 
     /**
      * Endpoint para obtener una carta por su ID.
@@ -136,21 +152,46 @@ public class CardController {
             @ApiResponse(responseCode = "404", description = "No se encontró ninguna carta con el ID proporcionado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateCard(@PathVariable Long id, @Valid @RequestBody CardCreateDTO cardCreateDTO, Locale locale) {
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> updateCard(
+            @PathVariable Long id,
+            @RequestPart("card") @Valid CardCreateDTO cardCreateDTO,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+            Locale locale) {
+
         logger.info("Actualizando carta con ID {}", id);
+
         try {
-            CardDTO updatedCard = cardService.updateCard(id, cardCreateDTO, locale);  // Llama al servicio para actualizar la carta
+            // Obtener la carta actual para saber su imagen previa
+            CardDTO existingCard = cardService.getCardById(id);
+
+            // Si se proporciona una nueva imagen, la subimos y guardamos el nuevo nombre
+            if (imageFile != null && !imageFile.isEmpty()) {
+                // eliminar imagen anterior:
+                if (existingCard.getImage() != null && !existingCard.getImage().isEmpty()) {
+                    fileStorageService.deleteFile(existingCard.getImage());
+                }
+
+                String newFileName = fileStorageService.saveFile(imageFile);
+                cardCreateDTO.setImage(newFileName);
+            } else {
+                // Si no se sube una nueva imagen, mantener la imagen actual
+                cardCreateDTO.setImage(existingCard.getImage());
+            }
+
+            CardDTO updatedCard = cardService.updateCard(id, cardCreateDTO, locale);
             logger.info("Carta con ID {} actualizada exitosamente.", id);
-            return ResponseEntity.ok(updatedCard);  // Devuelve la carta actualizada con un código de estado 200
+            return ResponseEntity.ok(updatedCard);
+
         } catch (IllegalArgumentException e) {
             logger.warn("Error al actualizar la carta con ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());  // Error 400 si la entrada es incorrecta
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Error al actualizar la carta con ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la carta");  // Error 500 si ocurre un problema interno
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la carta");
         }
     }
+
 
     /**
      * Endpoint para eliminar una carta por su ID.
@@ -178,5 +219,19 @@ public class CardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar la carta.");  // Error 500 si ocurre un problema interno
         }
     }
+    @Operation(summary = "Buscar cartas por nombre", description = "Devuelve las cartas que contienen el nombre proporcionado (ignora mayúsculas).")
+    @GetMapping("/search")
+    public ResponseEntity<List<CardDTO>> searchCardsByName(@RequestParam("name") String name) {
+        logger.info("Buscando cartas por nombre: {}", name);
+        List<CardDTO> results = cardService.searchByName(name);
+        return ResponseEntity.ok(results);
+    }
+    @Operation(summary = "Verificar si existe un código de carta")
+    @GetMapping("/exists")
+    public ResponseEntity<Boolean> existsByCode(@RequestParam("code") String code) {
+        boolean exists = cardService.existsByCode(code);
+        return ResponseEntity.ok(exists);
+    }
+
 
 }

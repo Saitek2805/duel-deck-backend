@@ -1,4 +1,4 @@
-package org.iesalixar.daw2.proyectopersonal.keinerhurtado.duel_deck.services;
+package org.iesalixar.daw2.keinerhurtado.duel_deck_api.services;
 
 
 import org.slf4j.Logger;

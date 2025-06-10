@@ -57,12 +57,20 @@ public class SecurityConfig {
                                 "/send-email").hasRole("ADMIN") // Solo ADMIN
                         .requestMatchers("/api/expansions").hasAnyRole("MANAGER","ADMIN") // Solo dos
                         .requestMatchers("/api/v1/authenticate",
-                                "/api/v1/register",
+                                "/api/auth/register/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs.yaml"
-                                ,"/api/cards"//comentar esta linea despues de acabar la practica de cliente
+                                "/v3/api-docs.yaml",
+                                "/api/cards/**",
+//                                "/api/cards/search",
+//                                "/api/cards/exists/**",
+                                "/api/packs/**",
+                                "/api/card-status/**",
+                                "/api/decks/**",
+                                "/api/deck-cards/**",
+                                "/api/deck-comments/**",
+                                "api/users/**"
                                 ).permitAll() // Solo todos
                         .anyRequest().authenticated() // El resto requiere autenticación
                 )

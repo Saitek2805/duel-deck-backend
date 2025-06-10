@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `cards` (
 -- Estado limitado/prohibido de cartas
 CREATE TABLE IF NOT EXISTS `card_status` (
   `card_id` INT PRIMARY KEY,
-  `status` ENUM ('Forbidden', 'Limited', 'Semi-Limited') NOT NULL,
+  `status` ENUM ('Forbidden', 'Limited', 'Semi_Limited') NOT NULL,
   FOREIGN KEY (`card_id`) REFERENCES `cards` (`id`) ON DELETE CASCADE
 );
 

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -123,4 +124,14 @@ public class CardService {
         cardRepository.delete(card);
         logger.info("Carta con ID {} eliminada.", id);
     }
+    public List<CardDTO> searchByName(String name) {
+        return cardRepository.findByNameContainingIgnoreCase(name)
+                .stream()
+                .map(cardMapper::toDTO)
+                .toList();
+    }
+    public boolean existsByCode(String code) {
+        return cardRepository.existsByCode(code);
+    }
+
 }
