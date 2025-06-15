@@ -55,14 +55,16 @@ public class SecurityConfig {
                         //.requestMatchers("/api/cards").hasAnyRole("USER","ADMIN") // ambos dos
                         .requestMatchers("/api/admin",
                                 "/send-email").hasRole("ADMIN") // Solo ADMIN
-                        .requestMatchers("/api/expansions").hasAnyRole("MANAGER","ADMIN") // Solo dos
+                        .requestMatchers("/crud").hasAnyRole("MANAGER","ADMIN")
+                                .requestMatchers("/api/images",
+                                        "/api/users/**").authenticated()
                         .requestMatchers("/api/v1/authenticate",
                                 "/api/auth/register/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs.yaml",
-                                "/api/cards/**",
+                                "/api/cards/**","/api/cards",
 //                                "/api/cards/search",
 //                                "/api/cards/exists/**",
                                 "/api/packs/**",
@@ -70,7 +72,13 @@ public class SecurityConfig {
                                 "/api/decks/**",
                                 "/api/deck-cards/**",
                                 "/api/deck-comments/**",
-                                "api/users/**"
+                                "api/users/**",
+                                "/uploads/**",
+                                "/api/expansions/**",
+                                "/api/card-attributes",
+                                "/api/card-rarities",
+                                "/api/card-types",
+                                "/api/card-typings"
                                 ).permitAll() // Solo todos
                         .anyRequest().authenticated() // El resto requiere autenticación
                 )

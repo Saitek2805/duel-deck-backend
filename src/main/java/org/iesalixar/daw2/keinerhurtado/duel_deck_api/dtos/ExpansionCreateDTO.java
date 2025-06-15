@@ -44,4 +44,7 @@ public class ExpansionCreateDTO {
      */
     @Size(max = 1000, message = "{msg.expansion.description.size}")  // Valida que el tamaño máximo sea 1000 caracteres
     private String description;
+
+
+    private String image;
 }

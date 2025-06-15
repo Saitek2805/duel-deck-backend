@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.iesalixar.daw2.keinerhurtado.duel_deck_api.dtos.ExpansionCreateDTO;
 import org.iesalixar.daw2.keinerhurtado.duel_deck_api.dtos.ExpansionDTO;
 import org.iesalixar.daw2.keinerhurtado.duel_deck_api.services.ExpansionService;
+import org.iesalixar.daw2.keinerhurtado.duel_deck_api.services.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Locale;
@@ -37,6 +39,8 @@ public class ExpansionController {
     private static final Logger logger = LoggerFactory.getLogger(ExpansionController.class);  // Logger para registrar los eventos
     @Autowired
     private ExpansionService expansionService;  // Servicio que contiene la lógica de negocio de las expansiones
+    @Autowired
+    private FileStorageService fileStorageService;
 
     /**
      * Endpoint para obtener todas las expansiones.
@@ -115,23 +119,32 @@ public class ExpansionController {
             @ApiResponse(responseCode = "404", description = "No se encontró ninguna expansión con el ID proporcionado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateExpansion(@PathVariable Long id, @Valid @RequestBody ExpansionCreateDTO expansionCreateDTO,
-                                             Locale locale) {
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> updateExpansion(
+            @PathVariable Long id,
+            @RequestPart("expansion") @Valid ExpansionCreateDTO expansionCreateDTO,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+            Locale locale) {
         logger.info("Actualizando expansión con ID {}", id);
         try {
-            ExpansionDTO updatedExpansion = expansionService.updateExpansion(id, expansionCreateDTO, locale);  // Llama al servicio para actualizar la expansión
-
+            // Si se proporciona una nueva imagen, la subimos y guardamos el nuevo nombre
+            if (imageFile != null && !imageFile.isEmpty()) {
+                // Aquí puedes borrar la imagen anterior si quieres (opcional)
+                String newFileName = fileStorageService.saveFile(imageFile);
+                expansionCreateDTO.setImage(newFileName);
+            }
+            ExpansionDTO updatedExpansion = expansionService.updateExpansion(id, expansionCreateDTO, locale);
             logger.info("Expansión con ID {} actualizada con éxito.", id);
-            return ResponseEntity.ok(updatedExpansion);  // Devuelve la expansión actualizada con un código de estado 200
+            return ResponseEntity.ok(updatedExpansion);
         } catch (IllegalArgumentException e) {
             logger.warn("Error al actualizar la expansión con ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());  // Devuelve un error 400 si ocurre un error en la entrada
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Error al actualizar la expansión con ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la expansión");  // Error 500 si hay problemas internos
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al actualizar la expansión");
         }
     }
+
 
     /**
      * Endpoint para crear una nueva expansión.
@@ -147,19 +160,29 @@ public class ExpansionController {
             @ApiResponse(responseCode = "400", description = "Solicitud inválida, los datos de entrada son incorrectos"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    @PostMapping
-    public ResponseEntity<?> createExpansion(@Valid @RequestBody ExpansionCreateDTO expansionCreateDTO, Locale locale) {
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<?> createExpansion(
+            @RequestPart("expansion") @Valid ExpansionCreateDTO expansionCreateDTO,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile,
+            Locale locale) {
         logger.info("Insertando nueva expansión con código {}", expansionCreateDTO.getCode());
         try {
-            ExpansionDTO createdExpansion = expansionService.createExpansion(expansionCreateDTO, locale);  // Llama al servicio para crear la expansión
+            // Subir la imagen si se proporciona
+            String imageFileName = null;
+            if (imageFile != null && !imageFile.isEmpty()) {
+                imageFileName = fileStorageService.saveFile(imageFile);
+                expansionCreateDTO.setImage(imageFileName); // Guardamos el nombre en el DTO
+            }
+
+            ExpansionDTO createdExpansion = expansionService.createExpansion(expansionCreateDTO, locale);
             logger.info("Expansión creada exitosamente con ID {}", createdExpansion.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdExpansion);  // Devuelve la expansión creada con un código de estado 201
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdExpansion);
         } catch (IllegalArgumentException e) {
             logger.warn("Error al crear la expansión: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());  // Error 400 si la entrada es incorrecta
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Error al crear la expansión: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la expansión");  // Error 500 si hay problemas internos
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al crear la expansión");
         }
     }
 

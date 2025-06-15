@@ -46,4 +46,17 @@ public class UserService {
     }
 
 
+    public UserDTO updateUserByUsername(String username, UserDTO dto) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Actualiza solo los campos editables (no el username, ni password, ni enabled)
+        if (dto.getFirstName() != null) user.setFirstName(dto.getFirstName());
+        if (dto.getLastName() != null) user.setLastName(dto.getLastName());
+        if (dto.getImage() != null) user.setImage(dto.getImage());
+
+        User saved = userRepository.save(user);
+        return convertToDTO(saved);
+    }
+
 }

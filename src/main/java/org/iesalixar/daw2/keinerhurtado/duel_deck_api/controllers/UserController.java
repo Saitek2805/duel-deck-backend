@@ -38,6 +38,17 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PutMapping("/username/{username}")
+    public ResponseEntity<UserDTO> updateUserByUsername(
+            @PathVariable String username,
+            @RequestBody UserDTO dto) {
+        try {
+            UserDTO updated = userService.updateUserByUsername(username, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 
 

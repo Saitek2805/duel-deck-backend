@@ -158,6 +158,8 @@ public class ExpansionService  {
         existingExpansion.setName(expansionCreateDTO.getName());
         existingExpansion.setReleaseDate(expansionCreateDTO.getReleaseDate());
         existingExpansion.setDescription(expansionCreateDTO.getDescription());
+        existingExpansion.setImage(expansionCreateDTO.getImage());
+
 
         // Guarda la expansión actualizada
         Expansion updatedExpansion = expansionRepository.save(existingExpansion);

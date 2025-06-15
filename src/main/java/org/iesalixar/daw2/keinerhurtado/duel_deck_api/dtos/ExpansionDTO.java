@@ -30,4 +30,6 @@ public class ExpansionDTO {
 
     // Descripción de la expansión, que da más detalles sobre la misma
     private String description;
+
+    private String image;
 }

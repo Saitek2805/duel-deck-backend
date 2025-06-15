@@ -9,6 +9,7 @@ import org.iesalixar.daw2.keinerhurtado.duel_deck_api.repositories.UserRepositor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -92,5 +93,23 @@ public class DeckService {
         dto.setUserName(deck.getUser().getUsername());
         return dto;
     }
+
+    public List<DeckDTO> getDecksByUsername(String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) return Collections.emptyList();
+        List<Deck> decks = deckRepository.findByUser_Id(user.getId());
+        return decks.stream()
+                .map(deck -> new DeckDTO(
+                        deck.getId(),
+                        deck.getName(),
+                        deck.getDescription(),
+                        deck.getImage(),
+                        deck.getUser().getId(),
+                        deck.getUser().getUsername()
+                ))
+                .collect(Collectors.toList());
+    }
+
+
 
 }

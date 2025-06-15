@@ -42,6 +42,7 @@ public class CardMapper {
         cardDTO.setImage(card.getImage());
         cardDTO.setDescription(card.getDescription());
 
+
         if (card.getExpansion() != null) {
             Expansion expansion = card.getExpansion();
             ExpansionDTO expansionDTO = new ExpansionDTO(
@@ -49,7 +50,8 @@ public class CardMapper {
                     expansion.getCode(),
                     expansion.getName(),
                     expansion.getReleaseDate(),
-                    expansion.getDescription()
+                    expansion.getDescription(),
+                    expansion.getImage()
             );
             cardDTO.setExpansion(expansionDTO);
         }

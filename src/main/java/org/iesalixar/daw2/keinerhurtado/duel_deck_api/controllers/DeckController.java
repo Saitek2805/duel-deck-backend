@@ -6,6 +6,8 @@ import org.iesalixar.daw2.keinerhurtado.duel_deck_api.services.DeckService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -68,5 +70,12 @@ public class DeckController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+    @GetMapping("/my")
+    public ResponseEntity<List<DeckDTO>> getMyDecks() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        List<DeckDTO> myDecks = deckService.getDecksByUsername(username);
+        return ResponseEntity.ok(myDecks);
     }
 }

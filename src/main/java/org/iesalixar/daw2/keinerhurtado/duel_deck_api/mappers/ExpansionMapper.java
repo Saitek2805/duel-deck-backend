@@ -23,7 +23,8 @@ public class ExpansionMapper {
                 expansion.getCode(),
                 expansion.getName(),
                 expansion.getReleaseDate(),
-                expansion.getDescription()
+                expansion.getDescription(),
+                expansion.getImage()
         );
     }
 
@@ -40,6 +41,7 @@ public class ExpansionMapper {
         expansion.setName(dto.getName());
         expansion.setReleaseDate(dto.getReleaseDate());
         expansion.setDescription(dto.getDescription());
+        expansion.setImage(dto.getImage());
         return expansion;
     }
 
@@ -55,6 +57,7 @@ public class ExpansionMapper {
         expansion.setName(createDTO.getName());
         expansion.setReleaseDate(createDTO.getReleaseDate());
         expansion.setDescription(createDTO.getDescription());
+        expansion.setImage(createDTO.getImage());
         return expansion;
     }
 }
